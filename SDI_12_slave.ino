@@ -7,8 +7,8 @@ Concurrent Measurement rausgenommen
 Arduino kann direkt an den SDI-12-Bus (hier PIN7) angeschlossen werden
 
 Stand 17.04.2025: Es scheint so, dass Timing-Fehler dir IRQs aus der Spur bringen.
-                  Gut nachvollziehbar mit dem SDI12-Term: https://github.com/joembedded/SDI12Term 
-				  welches es nicht 'soo' genau mit dem Timing nimmt...
+  Gut nachvollziehbar mit dem SDI12-Term: https://github.com/joembedded/SDI12Term 
+  welches es nicht 'soo' genau mit dem Timing nimmt...
 
 */
 
