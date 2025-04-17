@@ -1,15 +1,20 @@
-/** SDI-12 Slave Biolerplate, basierend auf https://github.com/EnviroDIY/Arduino-SDI-12
-Einfacher SDI12-Slave Sensor Protokoll V1.3 // Jo 17.04.2025
+/** SDI-12 Slave Boilerplate, basierend auf https://github.com/EnviroDIY/Arduino-SDI-12
+Einfacher SDI12-Slave Sensor Protokoll V1.3 
 
 Erweitert um A-Kommando fuer EEPROM, MEGA328P hat 1k EEPROM mit ca. 100k Zyklen
 Guenstige ATMEGA-Booards gibts ohne CH340, Stromverbrauch ca. 15-20 mA
 Concurrent Measurement rausgenommen
 Arduino kann direkt an den SDI-12-Bus (hier PIN7) angeschlossen werden
 
+Stand 17.04.2025: Es scheint so, dass Timing-Fehler dir IRQs aus der Spur bringen.
+                  Gut nachvollziehbar mit dem SDI12-Term: https://github.com/joembedded/SDI12Term 
+				  welches es nicht 'soo' genau mit dem Timing nimmt...
+
 */
 
 #include <SDI12.h>
 #include <EEPROM.h>
+#include <avr/wdt.h>
 
 #ifndef SDI12_DATA_PIN
 #define SDI12_DATA_PIN 7
@@ -148,7 +153,7 @@ void formatOutputSDI(float* measurementValues, String* dValues, unsigned int max
   while (j < 9) { dValues[++j] = ""; }
 }
 
-
+//---------------- SETUP ------------------
 void setup() {
   slaveSDI12.begin();
   delay(500);
@@ -159,14 +164,25 @@ void setup() {
   Serial.print("--SDI-Slave Adr.:'");
   Serial.print(sensorAddress);
   Serial.println("'--");
+
+  wdt_enable(WDTO_8S);  // WD 8 Sekunden
 }
 
+//---------------- LOOP ------------------
 void loop() {
   static float measurementValues[9];  // 9 floats to hold simulated sensor data
   static String
     dValues[10];                       // 10 String objects to hold the responses to aD0!-aD9! commands
   static String commandReceived = "";  // String object to hold the incoming command
 
+  // Laufzeitkontrolle 
+  static unsigned long lastMillis;
+  unsigned long currentMillis = millis();
+  if(currentMillis > lastMillis+1000 ){
+        lastMillis = currentMillis;
+         Serial.print("*");
+  }
+  wdt_reset();
 
   // If a byte is available, an SDI message is queued up. Read in the entire message
   // before proceding.  It may be more robust to add a single character per loop()
